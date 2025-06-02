@@ -122,18 +122,37 @@ quaternion quaternion::inverse() const
 quaternion quaternion::slerp(const quaternion& q0, const quaternion& q1, float t)
 {
 	// todo: 実装して下さい
+	const float threshold_theta = 0.0005f;//同じクォータニオンだった場合の角度のしきい値
+
 
 	//内積
 	float dot = q0.w_ * q1.w_ + q0.x_ * q1.x_ + q0.y_ * q1.y_ + q0.z_ * q1.z_;
 
+	//内積が負の時は角度が180度以上になる->一番近い(小さい)角度になるように
+	if (dot < 0)
+	{
+		return slerp(q0, q1*-1, t);
+	}
+
+	//角度
 	float theta = acosf(dot);
+
+	quaternion q_ret;//返すクォータニオン
+
+	//ほぼ同じ方向のクォータニオンを入れてしまうと角度が0になる->sin0は0なので0除算が起こる
+	//それを止めるためにほぼ同じ方向の場合はLerp
+	if (theta <= threshold_theta)
+	{
+		q_ret = q0 * (1 - t) + q1 * t;
+		return q_ret;
+	}
 
 	float sin_theta = sinf(theta);
 
 	float sin_q0=sinf((1-t)*theta)/sin_theta;
 	float sin_q1 = sinf(t * theta) / sin_theta;
 
-	quaternion q_ret = q0 * sin_q0 + q1 * sin_q1;
+	q_ret = q0 * sin_q0 + q1 * sin_q1;
 	return q_ret;
 }
 
